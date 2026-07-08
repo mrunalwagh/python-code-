@@ -1,0 +1,49 @@
+const readline = require("readline");
+const { chromium } = require("playwright");
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal: false,
+});
+
+async function runActions(actions) {
+  const browser = await chromium.launch({ headless: false });
+  const page = await browser.newPage();
+
+  try {
+    for (const act of actions) {
+      if (act.type === "goto") {
+        await page.goto(act.url);
+      } else if (act.type === "fill") {
+        await page.fill(act.selector, act.value);
+      } else if (act.type === "click") {
+        await page.click(act.selector);
+      } else if (act.type === "wait") {
+        await page.waitForSelector(act.selector);
+      }
+    }
+
+    await browser.close();
+    return { status: "success" };
+
+  } catch (err) {
+    await page.screenshot({ path: "error.png" });
+    await browser.close();
+    return { status: "error", message: err.message };
+  }
+}
+
+rl.on("line", async (input) => {
+  try {
+    const req = JSON.parse(input);
+
+    if (req.tool === "run_playwright") {
+      const result = await runActions(req.actions);
+      console.log(JSON.stringify(result));
+    }
+
+  } catch (e) {
+    console.log(JSON.stringify({ status: "error", message: e.message }));
+  }
+});
