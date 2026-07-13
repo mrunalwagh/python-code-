@@ -1,49 +1,40 @@
-const readline = require("readline");
-const { chromium } = require("playwright");
+Playwright MCP Local Setup Guide (Clean Steps)
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  terminal: false,
-});
+1. Install Node.js (LTS v20) from https://nodejs.org and verify using: node -v, npm -v
 
-async function runActions(actions) {
-  const browser = await chromium.launch({ headless: false });
-  const page = await browser.newPage();
+2. Install Git from https://git-scm.com and verify using: git --version
 
-  try {
-    for (const act of actions) {
-      if (act.type === "goto") {
-        await page.goto(act.url);
-      } else if (act.type === "fill") {
-        await page.fill(act.selector, act.value);
-      } else if (act.type === "click") {
-        await page.click(act.selector);
-      } else if (act.type === "wait") {
-        await page.waitForSelector(act.selector);
-      }
-    }
+3. Create project folder: mkdir Test and open it
 
-    await browser.close();
-    return { status: "success" };
+4. Clone repository: git clone https://github.com/microsoft/playwright-mcp.git
 
-  } catch (err) {
-    await page.screenshot({ path: "error.png" });
-    await browser.close();
-    return { status: "error", message: err.message };
-  }
+5. Go inside folder: cd playwright-mcp
+
+6. Install dependencies: npm install
+
+7. Run MCP server: node cli.js
+
+8. Create folder: Test/.vscode
+
+9. Create file: mcp.json inside .vscode
+
+10. Add config:
+
+{
+ "servers": {
+   "playwright-local": {
+     "command": "node",
+     "args": [
+       "FULL_PATH\Test\playwright-mcp\cli.js"
+     ]
+   }
+ }
 }
 
-rl.on("line", async (input) => {
-  try {
-    const req = JSON.parse(input);
+11. Open VS Code with 'Test' folder (not playwright-mcp)
 
-    if (req.tool === "run_playwright") {
-      const result = await runActions(req.actions);
-      console.log(JSON.stringify(result));
-    }
+12. Restart VS Code
 
-  } catch (e) {
-    console.log(JSON.stringify({ status: "error", message: e.message }));
-  }
-});
+13. Open Chat panel → Configure Tools → Enable 'playwright-local'
+
+14. Test with prompt: Use playwright tool to open https://google.com and take screenshot
